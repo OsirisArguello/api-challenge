@@ -25,7 +25,7 @@ public class CreateTransactionUC {
         if (transactionBO.getParentId() != null)
             validateParentExists(transactionBO.getParentId());
 
-        Optional<TransactionBO> maybeTransaction = service.findTransaction(transactionBO.getId());
+        Optional<TransactionBO> maybeTransaction = service.findTransactionById(transactionBO.getId());
 
         if (maybeTransaction.isPresent())
             throw TransactionCreationException.fromTransactionAlreadyExists();
@@ -34,7 +34,7 @@ public class CreateTransactionUC {
     }
 
     private void validateParentExists(Long parentId) {
-        Optional<TransactionBO> maybeParent = service.findTransaction(parentId);
+        Optional<TransactionBO> maybeParent = service.findTransactionById(parentId);
         if (maybeParent.isEmpty())
             throw TransactionCreationException.fromParentDoesntExists();
     }

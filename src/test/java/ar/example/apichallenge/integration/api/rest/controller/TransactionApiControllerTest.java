@@ -4,12 +4,14 @@ import ar.example.apichallenge.api.rest.dto.ErrorResponseDTO;
 import ar.example.apichallenge.api.rest.dto.TransactionCreationRequestDTO;
 import ar.example.apichallenge.api.rest.dto.TransactionCreationResponseDTO;
 import ar.example.apichallenge.application.service.TransactionService;
+import ar.example.apichallenge.domain.model.TransactionBO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -17,7 +19,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -111,6 +116,52 @@ public class TransactionApiControllerTest {
         assertThat(responseError.getBody()).isNotNull();
         assertThat(responseError.getBody().getCode()).isEqualTo("error.transaction.parent,not.exists");
         assertThat(responseError.getBody().getMessage()).isEqualTo("Invalid argument on the body sent");
+
+    }
+
+    @Test
+    void findByType_withValidTypeAndTypeFound_mustReturnListOfTransactionIds() {
+        // Arrange
+        String searchArgument = "searchType";
+        TransactionBO transaction1 = new TransactionBO(10L, 20.0d, searchArgument, null);
+        TransactionBO transaction2 = new TransactionBO(20L, 20.0d, searchArgument, null);
+        TransactionBO transaction3 = new TransactionBO(30L, 20.0d, "type3", 10L);
+        TransactionBO transaction4 = new TransactionBO(40L, 20.0d, "type4", 30L);
+
+        ReflectionTestUtils.setField(service, "transactionList",
+                Arrays.asList(transaction1, transaction2, transaction3, transaction4));
+
+        // Act
+        ResponseEntity<List<Long>> response =
+                testRestTemplate.exchange(MessageFormat.format("/transactions/types/{0}", searchArgument),
+                        HttpMethod.GET, new HttpEntity<>(null), new ParameterizedTypeReference<>() {
+                        });
+
+        //Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getBody()).isNotEmpty().containsExactlyInAnyOrder(10L, 20L);
+
+    }
+
+    @Test
+    void findByType_withValidTypeAndTypeNotFound_mustReturnEmptyList() {
+        // Arrange
+        String searchArgument = "searchType";
+        TransactionBO transaction1 = new TransactionBO(1L, 20.0d, "type1", null);
+        TransactionBO transaction2 = new TransactionBO(2L, 20.0d, "type2", null);
+
+        ReflectionTestUtils.setField(service, "transactionList",
+                Arrays.asList(transaction1, transaction2));
+
+        // Act
+        ResponseEntity<List<Long>> response =
+                testRestTemplate.exchange(MessageFormat.format("/transactions/types/{0}", searchArgument),
+                        HttpMethod.GET, new HttpEntity<>(null), new ParameterizedTypeReference<>() {
+                        });
+
+        //Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getBody()).isEmpty();
 
     }
 
