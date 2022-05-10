@@ -72,7 +72,7 @@ public class TransactionApiControllerTest {
     }
 
     @Test
-    void create_withRepeatedRequestId_mustReturnErrorResponse() {
+    void create_withRepeatedTransactionId_mustReturnErrorResponse() {
         // Arrange
         TransactionCreationRequestDTO request = new TransactionCreationRequestDTO(20d, "type", null);
         HttpEntity<TransactionCreationRequestDTO> httpEntity = new HttpEntity<>(request);
@@ -92,6 +92,25 @@ public class TransactionApiControllerTest {
         assertThat(responseError.getBody()).isNotNull();
         assertThat(responseError.getBody().getCode()).isEqualTo("error.transaction.id.exists");
         assertThat(responseError.getBody().getMessage()).isEqualTo("Transaction with the given id already exists");
+
+    }
+
+    @Test
+    void create_withInvalidParentId_mustReturnErrorResponse() {
+        // Arrange
+        TransactionCreationRequestDTO request = new TransactionCreationRequestDTO(20d, "type", 16L);
+        HttpEntity<TransactionCreationRequestDTO> httpEntity = new HttpEntity<>(request);
+
+        // Act
+        ResponseEntity<ErrorResponseDTO> responseError =
+                testRestTemplate.exchange("/transactions/1", HttpMethod.PUT, httpEntity, ErrorResponseDTO.class);
+
+        // Assert
+        assertThat(responseError).isNotNull();
+        assertThat(responseError.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(responseError.getBody()).isNotNull();
+        assertThat(responseError.getBody().getCode()).isEqualTo("error.transaction.parent,not.exists");
+        assertThat(responseError.getBody().getMessage()).isEqualTo("Invalid argument on the body sent");
 
     }
 

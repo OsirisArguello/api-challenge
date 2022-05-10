@@ -21,11 +21,21 @@ public class CreateTransactionUC {
      * @param transactionBO transaction to create
      */
     public void create(TransactionBO transactionBO) {
+
+        if (transactionBO.getParentId() != null)
+            validateParentExists(transactionBO.getParentId());
+
         Optional<TransactionBO> maybeTransaction = service.findTransaction(transactionBO.getId());
 
         if (maybeTransaction.isPresent())
-            throw new TransactionCreationException();
+            throw TransactionCreationException.fromTransactionAlreadyExists();
 
         service.saveTransaction(transactionBO);
+    }
+
+    private void validateParentExists(Long parentId) {
+        Optional<TransactionBO> maybeParent = service.findTransaction(parentId);
+        if (maybeParent.isEmpty())
+            throw TransactionCreationException.fromParentDoesntExists();
     }
 }

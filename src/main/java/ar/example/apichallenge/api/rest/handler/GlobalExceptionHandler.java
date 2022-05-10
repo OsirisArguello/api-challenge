@@ -16,9 +16,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({TransactionCreationException.class})
-    public ResponseEntity<ErrorResponseDTO> handleTransactionCreationException() {
-        ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO("error.transaction.id.exists",
-                "Transaction with the given id already exists");
+    public ResponseEntity<ErrorResponseDTO> handleTransactionCreationException(TransactionCreationException ex) {
+        ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(ex.getCode(),
+                ex.getMessage());
         return new ResponseEntity<>(errorResponseDTO, HttpStatus.BAD_REQUEST);
     }
 
