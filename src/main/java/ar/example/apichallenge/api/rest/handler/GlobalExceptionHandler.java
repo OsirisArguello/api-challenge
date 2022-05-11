@@ -1,6 +1,7 @@
 package ar.example.apichallenge.api.rest.handler;
 
 import ar.example.apichallenge.api.rest.dto.ErrorResponseDTO;
+import ar.example.apichallenge.application.exception.TransactionAmountSumException;
 import ar.example.apichallenge.application.exception.TransactionCreationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,10 +16,16 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler({TransactionAmountSumException.class})
+    public ResponseEntity<ErrorResponseDTO> handleTransactionAmountSumException() {
+        ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO("error.transaction.not.found",
+                "Transaction with the given id couldn't be found");
+        return new ResponseEntity<>(errorResponseDTO, HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler({TransactionCreationException.class})
     public ResponseEntity<ErrorResponseDTO> handleTransactionCreationException(TransactionCreationException ex) {
-        ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(ex.getCode(),
-                ex.getMessage());
+        ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(ex.getCode(), ex.getMessage());
         return new ResponseEntity<>(errorResponseDTO, HttpStatus.BAD_REQUEST);
     }
 

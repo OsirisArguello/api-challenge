@@ -1,6 +1,7 @@
 package ar.example.apichallenge.integration.api.rest.controller;
 
 import ar.example.apichallenge.api.rest.dto.ErrorResponseDTO;
+import ar.example.apichallenge.api.rest.dto.TransactionAmountSumResponseDTO;
 import ar.example.apichallenge.api.rest.dto.TransactionCreationRequestDTO;
 import ar.example.apichallenge.api.rest.dto.TransactionCreationResponseDTO;
 import ar.example.apichallenge.application.service.TransactionService;
@@ -22,6 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -114,7 +116,7 @@ public class TransactionApiControllerTest {
         assertThat(responseError).isNotNull();
         assertThat(responseError.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(responseError.getBody()).isNotNull();
-        assertThat(responseError.getBody().getCode()).isEqualTo("error.transaction.parent,not.exists");
+        assertThat(responseError.getBody().getCode()).isEqualTo("error.transaction.parent.not.exists");
         assertThat(responseError.getBody().getMessage()).isEqualTo("Invalid argument on the body sent");
 
     }
@@ -139,6 +141,7 @@ public class TransactionApiControllerTest {
 
         //Assert
         assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty().containsExactlyInAnyOrder(10L, 20L);
 
     }
@@ -161,8 +164,68 @@ public class TransactionApiControllerTest {
 
         //Assert
         assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEmpty();
 
     }
 
+    @Test
+    void sumAmounts_withValidTransactionIdAndParentFound_mustReturnSum() {
+        // Arrange
+        TransactionBO transaction1 = new TransactionBO(10L, 40.0d, "type1", null);
+        TransactionBO transaction2 = new TransactionBO(20L, 30.0d, "type2", 10L);
+        TransactionBO transaction3 = new TransactionBO(30L, 20.0d, "type3", 10L);
+        TransactionBO transaction4 = new TransactionBO(40L, 10.0d, "type4", 30L);
+
+        ReflectionTestUtils.setField(service, "transactionList",
+                Arrays.asList(transaction1, transaction2, transaction3, transaction4));
+
+        // Act
+        ResponseEntity<TransactionAmountSumResponseDTO> response =
+                testRestTemplate.exchange("/transactions/sum/20",
+                        HttpMethod.GET, new HttpEntity<>(null), TransactionAmountSumResponseDTO.class);
+
+        //Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getSum()).isEqualTo(50.0d);
+    }
+
+    @Test
+    void sumAmounts_withValidTransactionIdAndParentNotFound_mustReturnSum() {
+        // Arrange
+        TransactionBO transaction1 = new TransactionBO(10L, 40.0d, "type1", null);
+
+        ReflectionTestUtils.setField(service, "transactionList",
+                Collections.singletonList(transaction1));
+
+        // Act
+        ResponseEntity<TransactionAmountSumResponseDTO> response =
+                testRestTemplate.exchange("/transactions/sum/10",
+                        HttpMethod.GET, new HttpEntity<>(null), TransactionAmountSumResponseDTO.class);
+
+        //Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getSum()).isEqualTo(40.0d);
+    }
+
+    @Test
+    void sumAmounts_withValidTransactionNotFound_mustReturnErrorNotFound() {
+
+        // Act
+        ResponseEntity<ErrorResponseDTO> response =
+                testRestTemplate.exchange("/transactions/sum/10",
+                        HttpMethod.GET, new HttpEntity<>(null), ErrorResponseDTO.class);
+
+        //Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getCode()).isEqualTo("error.transaction.not.found");
+        assertThat(response.getBody().getMessage()).isEqualTo("Transaction with the given id couldn't be found");
+
+    }
 }

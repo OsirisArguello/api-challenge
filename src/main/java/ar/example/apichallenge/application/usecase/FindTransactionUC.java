@@ -14,6 +14,12 @@ public class FindTransactionUC {
 
     private final TransactionService transactionService;
 
+    /**
+     * Find all transactions ids of the same type
+     *
+     * @param type transaction type of the transactions to find
+     * @return List of transaction ids
+     */
     public List<Long> findByType(String type) {
         return transactionService.findTransactionByType(type).stream()
                 .map(TransactionBO::getId)

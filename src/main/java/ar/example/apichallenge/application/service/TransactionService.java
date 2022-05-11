@@ -25,4 +25,9 @@ public class TransactionService {
         return transactionList.stream().filter(t -> type.equals(t.getType()))
                 .collect(Collectors.toList());
     }
+
+    public List<TransactionBO> findTransactionsByParentId(Long parentId) {
+        return transactionList.stream().filter(t -> parentId.equals(t.getParentId()))
+                .collect(Collectors.toList());
+    }
 }

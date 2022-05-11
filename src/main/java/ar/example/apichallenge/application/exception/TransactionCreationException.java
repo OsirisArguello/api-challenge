@@ -17,6 +17,6 @@ public class TransactionCreationException extends RuntimeException {
     }
 
     public static TransactionCreationException fromParentDoesntExists() {
-        return new TransactionCreationException("error.transaction.parent,not.exists", "Invalid argument on the body sent");
+        return new TransactionCreationException("error.transaction.parent.not.exists", "Invalid argument on the body sent");
     }
 }
